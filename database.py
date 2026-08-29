@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 import pandas as pd
 import json
+import threading
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ class DatabaseManager:
         self.db_path = db_path
         self.conn = None
         self.cursor = None
+        self.lock = threading.Lock()  # Thread safety lock
         self.init_database()
     
     def init_database(self):
@@ -21,15 +23,9 @@ class DatabaseManager:
             self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
             self.cursor = self.conn.cursor()
-            
-            # Enable foreign keys
             self.cursor.execute("PRAGMA foreign_keys = ON")
-            
-            # Create tables
             self.create_tables()
-            
             logger.info(f"Database initialized at {self.db_path}")
-            
         except Exception as e:
             logger.error(f"Error initializing database: {e}")
             raise
@@ -37,7 +33,6 @@ class DatabaseManager:
     def create_tables(self):
         """Create all necessary tables"""
         try:
-            # Products table with simplified video columns
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS products (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,7 +69,6 @@ class DatabaseManager:
                 )
             ''')
             
-            # Reviews table (simplified - no video columns)
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS reviews (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,7 +88,6 @@ class DatabaseManager:
                 )
             ''')
             
-            # Keywords table
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS keywords (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,7 +101,6 @@ class DatabaseManager:
                 )
             ''')
             
-            # Scraping sessions table
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS scraping_sessions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -124,7 +116,6 @@ class DatabaseManager:
                 )
             ''')
             
-            # Create indexes
             self.cursor.execute('CREATE INDEX IF NOT EXISTS idx_products_asin ON products(asin)')
             self.cursor.execute('CREATE INDEX IF NOT EXISTS idx_products_keyword ON products(keyword)')
             self.cursor.execute('CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id)')
@@ -132,185 +123,89 @@ class DatabaseManager:
             
             self.conn.commit()
             logger.info("Database tables created successfully")
-            
         except Exception as e:
             logger.error(f"Error creating tables: {e}")
             raise
     
     def insert_product(self, product_data: Dict) -> Optional[int]:
-        """Insert or update product data"""
-        try:
-            # Check if product already exists
-            asin = product_data.get('asin', 'N/A')
-            if asin != 'N/A':
-                self.cursor.execute('SELECT id FROM products WHERE asin = ?', (asin,))
-                existing = self.cursor.fetchone()
+        """Insert or update product data (thread-safe)"""
+        with self.lock:
+            try:
+                asin = product_data.get('asin', 'N/A')
+                if asin != 'N/A':
+                    self.cursor.execute('SELECT id FROM products WHERE asin = ?', (asin,))
+                    existing = self.cursor.fetchone()
+                    
+                    if existing:
+                        product_id = existing['id']
+                        update_fields = []
+                        update_values = []
+                        
+                        for key, value in product_data.items():
+                            if key != 'asin' and key != 'id':
+                                update_fields.append(f"{key} = ?")
+                                update_values.append(value)
+                        
+                        if update_fields:
+                            update_fields.append("updated_at = ?")
+                            update_values.append(datetime.now().isoformat())
+                            update_query = f"UPDATE products SET {', '.join(update_fields)} WHERE id = ?"
+                            update_values.append(product_id)
+                            self.cursor.execute(update_query, update_values)
+                            self.conn.commit()
+                        
+                        return product_id
                 
-                if existing:
-                    # Update existing product
-                    product_id = existing['id']
-                    update_fields = []
-                    update_values = []
-                    
-                    for key, value in product_data.items():
-                        if key != 'asin' and key != 'id':
-                            update_fields.append(f"{key} = ?")
-                            update_values.append(value)
-                    
-                    if update_fields:
-                        update_fields.append("updated_at = ?")
-                        update_values.append(datetime.now().isoformat())
-                        
-                        update_query = f"UPDATE products SET {', '.join(update_fields)} WHERE id = ?"
-                        update_values.append(product_id)
-                        
-                        self.cursor.execute(update_query, update_values)
-                        self.conn.commit()
-                    
-                    return product_id
-            
-            # Insert new product
-            columns = list(product_data.keys())
-            placeholders = ['?' for _ in columns]
-            
-            insert_query = f'''
-                INSERT OR REPLACE INTO products ({', '.join(columns)})
-                VALUES ({', '.join(placeholders)})
-            '''
-            
-            self.cursor.execute(insert_query, [product_data.get(col) for col in columns])
-            self.conn.commit()
-            
-            return self.cursor.lastrowid
-            
-        except Exception as e:
-            logger.error(f"Error inserting product: {e}")
-            self.conn.rollback()
-            return None
+                columns = list(product_data.keys())
+                placeholders = ['?' for _ in columns]
+                insert_query = f'''
+                    INSERT OR REPLACE INTO products ({', '.join(columns)})
+                    VALUES ({', '.join(placeholders)})
+                '''
+                self.cursor.execute(insert_query, [product_data.get(col) for col in columns])
+                self.conn.commit()
+                return self.cursor.lastrowid
+            except Exception as e:
+                logger.error(f"Error inserting product: {e}")
+                self.conn.rollback()
+                return None
     
     def insert_review(self, review_data: Dict, product_id: Optional[int] = None) -> Optional[int]:
-        """Insert review data"""
-        try:
-            if product_id:
-                review_data['product_id'] = product_id
-            
-            columns = list(review_data.keys())
-            placeholders = ['?' for _ in columns]
-            
-            insert_query = f'''
-                INSERT INTO reviews ({', '.join(columns)})
-                VALUES ({', '.join(placeholders)})
-            '''
-            
-            self.cursor.execute(insert_query, [review_data.get(col) for col in columns])
-            self.conn.commit()
-            
-            return self.cursor.lastrowid
-            
-        except Exception as e:
-            logger.error(f"Error inserting review: {e}")
-            self.conn.rollback()
-            return None
+        """Insert review data (thread-safe)"""
+        with self.lock:
+            try:
+                if product_id:
+                    review_data['product_id'] = product_id
+                
+                columns = list(review_data.keys())
+                placeholders = ['?' for _ in columns]
+                insert_query = f'''
+                    INSERT INTO reviews ({', '.join(columns)})
+                    VALUES ({', '.join(placeholders)})
+                '''
+                self.cursor.execute(insert_query, [review_data.get(col) for col in columns])
+                self.conn.commit()
+                return self.cursor.lastrowid
+            except Exception as e:
+                logger.error(f"Error inserting review: {e}")
+                self.conn.rollback()
+                return None
     
     def insert_keyword_status(self, keyword: str, status: str, products_found: int = 0, 
                              reviews_found: int = 0, error_message: str = None):
-        """Insert or update keyword status"""
-        try:
-            self.cursor.execute('''
-                INSERT OR REPLACE INTO keywords 
-                (keyword, status, products_found, reviews_found, error_message, scraped_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (keyword, status, products_found, reviews_found, 
-                  error_message, datetime.now().isoformat()))
-            self.conn.commit()
-            
-        except Exception as e:
-            logger.error(f"Error inserting keyword status: {e}")
-            self.conn.rollback()
-    
-    def create_session(self, total_keywords: int) -> int:
-        """Create a new scraping session"""
-        try:
-            self.cursor.execute('''
-                INSERT INTO scraping_sessions 
-                (session_start, total_keywords, status)
-                VALUES (?, ?, ?)
-            ''', (datetime.now().isoformat(), total_keywords, 'in_progress'))
-            self.conn.commit()
-            return self.cursor.lastrowid
-            
-        except Exception as e:
-            logger.error(f"Error creating session: {e}")
-            self.conn.rollback()
-            return 0
-    
-    def update_session(self, session_id: int, successful: int, failed: int, 
-                      total_products: int, total_reviews: int):
-        """Update session statistics"""
-        try:
-            self.cursor.execute('''
-                UPDATE scraping_sessions 
-                SET session_end = ?,
-                    successful_keywords = ?,
-                    failed_keywords = ?,
-                    total_products = ?,
-                    total_reviews = ?,
-                    status = 'completed'
-                WHERE id = ?
-            ''', (datetime.now().isoformat(), successful, failed, 
-                  total_products, total_reviews, session_id))
-            self.conn.commit()
-            
-        except Exception as e:
-            logger.error(f"Error updating session: {e}")
-            self.conn.rollback()
-    
-    def get_statistics(self) -> Dict:
-        """Get database statistics"""
-        try:
-            stats = {}
-            
-            self.cursor.execute('SELECT COUNT(*) as count FROM products')
-            stats['total_products'] = self.cursor.fetchone()['count']
-            
-            self.cursor.execute('SELECT COUNT(*) as count FROM reviews')
-            stats['total_reviews'] = self.cursor.fetchone()['count']
-            
-            self.cursor.execute('SELECT COUNT(*) as count FROM products WHERE video_url != "N/A" AND video_url IS NOT NULL')
-            stats['products_with_videos'] = self.cursor.fetchone()['count']
-            
-            self.cursor.execute('SELECT COUNT(*) as count FROM keywords WHERE status = "success"')
-            stats['successful_keywords'] = self.cursor.fetchone()['count']
-            
-            self.cursor.execute('SELECT COUNT(*) as count FROM keywords WHERE status = "failed"')
-            stats['failed_keywords'] = self.cursor.fetchone()['count']
-            
-            self.cursor.execute('''
-                SELECT AVG(CAST(REPLACE(REPLACE(price, '$', ''), ',', '') AS FLOAT)) as avg_price
-                FROM products 
-                WHERE price != 'N/A' AND price IS NOT NULL
-            ''')
-            avg_price = self.cursor.fetchone()['avg_price']
-            stats['average_price'] = round(avg_price, 2) if avg_price else 0
-            
-            return stats
-            
-        except Exception as e:
-            logger.error(f"Error getting statistics: {e}")
-            return {}
-    
-    def export_to_csv(self, table_name: str, filename: str):
-        """Export table data to CSV"""
-        try:
-            query = f'SELECT * FROM {table_name}'
-            df = pd.read_sql_query(query, self.conn)
-            df.to_csv(filename, index=False, encoding='utf-8')
-            logger.info(f"Exported {table_name} to {filename}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error exporting to CSV: {e}")
-            return False
+        """Insert or update keyword status (thread-safe)"""
+        with self.lock:
+            try:
+                self.cursor.execute('''
+                    INSERT OR REPLACE INTO keywords 
+                    (keyword, status, products_found, reviews_found, error_message, scraped_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (keyword, status, products_found, reviews_found, 
+                      error_message, datetime.now().isoformat()))
+                self.conn.commit()
+            except Exception as e:
+                logger.error(f"Error inserting keyword status: {e}")
+                self.conn.rollback()
     
     def close(self):
         """Close database connection"""

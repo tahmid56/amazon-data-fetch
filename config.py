@@ -3,7 +3,6 @@ import os
 import logging
 import warnings
 
-# Suppress warnings
 warnings.filterwarnings('ignore')
 os.environ['WDM_LOG_LEVEL'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -14,6 +13,11 @@ class Config:
     MIN_DELAY = 3
     MAX_DELAY = 7
     PAGE_LOAD_TIMEOUT = 30
+    
+    # Multi-threading settings
+    MAX_THREADS = 3  # Number of concurrent threads (adjust based on your needs)
+    MAX_PRODUCTS_PER_KEYWORD = 30
+    MAX_REVIEWS_PER_PRODUCT = 50
     
     # Image loading
     LOAD_IMAGES = True
@@ -33,14 +37,10 @@ class Config:
     DATABASE_PATH = "amazon_scraper.db"
     
     # Delay settings
-    DELAY_BETWEEN_KEYWORDS_MIN = 5
-    DELAY_BETWEEN_KEYWORDS_MAX = 10
-    DELAY_BETWEEN_PRODUCTS_MIN = 3
-    DELAY_BETWEEN_PRODUCTS_MAX = 6
-    
-    # Scraping limits
-    MAX_PRODUCTS_PER_KEYWORD = 30
-    MAX_REVIEWS_PER_PRODUCT = 50
+    DELAY_BETWEEN_KEYWORDS_MIN = 3
+    DELAY_BETWEEN_KEYWORDS_MAX = 7
+    DELAY_BETWEEN_PRODUCTS_MIN = 2
+    DELAY_BETWEEN_PRODUCTS_MAX = 5
     
     # CAPTCHA handling
     CAPTCHA_WAIT_TIME = 60

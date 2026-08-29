@@ -1,0 +1,360 @@
+2026-08-29 21:25:03 - ERROR - [ThreadPoolExecutor-0_0] - [ThreadPoolExecutor-0_0] Error scraping product details: Message: timeout: Timed out receiving message from renderer: 29.611
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x0000000104b5ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010485c33c chromedriver + 279356
+2   chromedriver                        0x000000010484c4a8 chromedriver + 214184
+3   chromedriver                        0x000000010484c208 chromedriver + 213512
+4   chromedriver                        0x0000000104849f7c chromedriver + 204668
+5   chromedriver                        0x000000010484ab70 chromedriver + 207728
+6   chromedriver                        0x0000000104857cc8 chromedriver + 261320
+7   chromedriver                        0x0000000104868ef8 chromedriver + 331512
+8   chromedriver                        0x000000010484b1dc chromedriver + 209372
+9   chromedriver                        0x0000000104868cb4 chromedriver + 330932
+10  chromedriver                        0x00000001048e2b24 chromedriver + 830244
+11  chromedriver                        0x000000010489a39c chromedriver + 533404
+12  chromedriver                        0x0000000104b2d950 chromedriver + 3234128
+13  chromedriver                        0x0000000104b307b0 chromedriver + 3246000
+14  chromedriver                        0x0000000104b1732c chromedriver + 3142444
+15  chromedriver                        0x0000000104b31088 chromedriver + 3248264
+16  chromedriver                        0x0000000104b09650 chromedriver + 3085904
+17  chromedriver                        0x0000000104b4c580 chromedriver + 3360128
+18  chromedriver                        0x0000000104b4c6e0 chromedriver + 3360480
+19  chromedriver                        0x0000000104b5cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+Traceback (most recent call last):
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/scraper.py", line 288, in scrape_product_details
+    driver.get(product_url)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 355, in get
+    self.execute(Command.GET, {"url": url})
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 346, in execute
+    self.error_handler.check_response(response)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/errorhandler.py", line 229, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.TimeoutException: Message: timeout: Timed out receiving message from renderer: 29.611
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x0000000104b5ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010485c33c chromedriver + 279356
+2   chromedriver                        0x000000010484c4a8 chromedriver + 214184
+3   chromedriver                        0x000000010484c208 chromedriver + 213512
+4   chromedriver                        0x0000000104849f7c chromedriver + 204668
+5   chromedriver                        0x000000010484ab70 chromedriver + 207728
+6   chromedriver                        0x0000000104857cc8 chromedriver + 261320
+7   chromedriver                        0x0000000104868ef8 chromedriver + 331512
+8   chromedriver                        0x000000010484b1dc chromedriver + 209372
+9   chromedriver                        0x0000000104868cb4 chromedriver + 330932
+10  chromedriver                        0x00000001048e2b24 chromedriver + 830244
+11  chromedriver                        0x000000010489a39c chromedriver + 533404
+12  chromedriver                        0x0000000104b2d950 chromedriver + 3234128
+13  chromedriver                        0x0000000104b307b0 chromedriver + 3246000
+14  chromedriver                        0x0000000104b1732c chromedriver + 3142444
+15  chromedriver                        0x0000000104b31088 chromedriver + 3248264
+16  chromedriver                        0x0000000104b09650 chromedriver + 3085904
+17  chromedriver                        0x0000000104b4c580 chromedriver + 3360128
+18  chromedriver                        0x0000000104b4c6e0 chromedriver + 3360480
+19  chromedriver                        0x0000000104b5cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+
+2026-08-29 21:28:31 - ERROR - [ThreadPoolExecutor-0_1] - [ThreadPoolExecutor-0_1] Error scraping product details: Message: timeout: Timed out receiving message from renderer: 29.582
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x000000010080ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010050c33c chromedriver + 279356
+2   chromedriver                        0x00000001004fc4a8 chromedriver + 214184
+3   chromedriver                        0x00000001004fc208 chromedriver + 213512
+4   chromedriver                        0x00000001004f9f7c chromedriver + 204668
+5   chromedriver                        0x00000001004fab70 chromedriver + 207728
+6   chromedriver                        0x0000000100507cc8 chromedriver + 261320
+7   chromedriver                        0x0000000100518ef8 chromedriver + 331512
+8   chromedriver                        0x00000001004fb1dc chromedriver + 209372
+9   chromedriver                        0x0000000100518cb4 chromedriver + 330932
+10  chromedriver                        0x0000000100592b24 chromedriver + 830244
+11  chromedriver                        0x000000010054a39c chromedriver + 533404
+12  chromedriver                        0x00000001007dd950 chromedriver + 3234128
+13  chromedriver                        0x00000001007e07b0 chromedriver + 3246000
+14  chromedriver                        0x00000001007c732c chromedriver + 3142444
+15  chromedriver                        0x00000001007e1088 chromedriver + 3248264
+16  chromedriver                        0x00000001007b9650 chromedriver + 3085904
+17  chromedriver                        0x00000001007fc580 chromedriver + 3360128
+18  chromedriver                        0x00000001007fc6e0 chromedriver + 3360480
+19  chromedriver                        0x000000010080cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+Traceback (most recent call last):
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/scraper.py", line 288, in scrape_product_details
+    driver.get(product_url)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 355, in get
+    self.execute(Command.GET, {"url": url})
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 346, in execute
+    self.error_handler.check_response(response)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/errorhandler.py", line 229, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.TimeoutException: Message: timeout: Timed out receiving message from renderer: 29.582
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x000000010080ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010050c33c chromedriver + 279356
+2   chromedriver                        0x00000001004fc4a8 chromedriver + 214184
+3   chromedriver                        0x00000001004fc208 chromedriver + 213512
+4   chromedriver                        0x00000001004f9f7c chromedriver + 204668
+5   chromedriver                        0x00000001004fab70 chromedriver + 207728
+6   chromedriver                        0x0000000100507cc8 chromedriver + 261320
+7   chromedriver                        0x0000000100518ef8 chromedriver + 331512
+8   chromedriver                        0x00000001004fb1dc chromedriver + 209372
+9   chromedriver                        0x0000000100518cb4 chromedriver + 330932
+10  chromedriver                        0x0000000100592b24 chromedriver + 830244
+11  chromedriver                        0x000000010054a39c chromedriver + 533404
+12  chromedriver                        0x00000001007dd950 chromedriver + 3234128
+13  chromedriver                        0x00000001007e07b0 chromedriver + 3246000
+14  chromedriver                        0x00000001007c732c chromedriver + 3142444
+15  chromedriver                        0x00000001007e1088 chromedriver + 3248264
+16  chromedriver                        0x00000001007b9650 chromedriver + 3085904
+17  chromedriver                        0x00000001007fc580 chromedriver + 3360128
+18  chromedriver                        0x00000001007fc6e0 chromedriver + 3360480
+19  chromedriver                        0x000000010080cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+
+2026-08-29 21:31:38 - ERROR - [ThreadPoolExecutor-0_1] - [ThreadPoolExecutor-0_1] Error scraping product details: Message: timeout: Timed out receiving message from renderer: 29.642
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x000000010080ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010050c33c chromedriver + 279356
+2   chromedriver                        0x00000001004fc4a8 chromedriver + 214184
+3   chromedriver                        0x00000001004fc208 chromedriver + 213512
+4   chromedriver                        0x00000001004f9f7c chromedriver + 204668
+5   chromedriver                        0x00000001004fab70 chromedriver + 207728
+6   chromedriver                        0x0000000100507cc8 chromedriver + 261320
+7   chromedriver                        0x0000000100518ef8 chromedriver + 331512
+8   chromedriver                        0x00000001004fb1dc chromedriver + 209372
+9   chromedriver                        0x0000000100518cb4 chromedriver + 330932
+10  chromedriver                        0x0000000100592b24 chromedriver + 830244
+11  chromedriver                        0x000000010054a39c chromedriver + 533404
+12  chromedriver                        0x00000001007dd950 chromedriver + 3234128
+13  chromedriver                        0x00000001007e07b0 chromedriver + 3246000
+14  chromedriver                        0x00000001007c732c chromedriver + 3142444
+15  chromedriver                        0x00000001007e1088 chromedriver + 3248264
+16  chromedriver                        0x00000001007b9650 chromedriver + 3085904
+17  chromedriver                        0x00000001007fc580 chromedriver + 3360128
+18  chromedriver                        0x00000001007fc6e0 chromedriver + 3360480
+19  chromedriver                        0x000000010080cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+Traceback (most recent call last):
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/scraper.py", line 288, in scrape_product_details
+    driver.get(product_url)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 355, in get
+    self.execute(Command.GET, {"url": url})
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 346, in execute
+    self.error_handler.check_response(response)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/errorhandler.py", line 229, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.TimeoutException: Message: timeout: Timed out receiving message from renderer: 29.642
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x000000010080ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010050c33c chromedriver + 279356
+2   chromedriver                        0x00000001004fc4a8 chromedriver + 214184
+3   chromedriver                        0x00000001004fc208 chromedriver + 213512
+4   chromedriver                        0x00000001004f9f7c chromedriver + 204668
+5   chromedriver                        0x00000001004fab70 chromedriver + 207728
+6   chromedriver                        0x0000000100507cc8 chromedriver + 261320
+7   chromedriver                        0x0000000100518ef8 chromedriver + 331512
+8   chromedriver                        0x00000001004fb1dc chromedriver + 209372
+9   chromedriver                        0x0000000100518cb4 chromedriver + 330932
+10  chromedriver                        0x0000000100592b24 chromedriver + 830244
+11  chromedriver                        0x000000010054a39c chromedriver + 533404
+12  chromedriver                        0x00000001007dd950 chromedriver + 3234128
+13  chromedriver                        0x00000001007e07b0 chromedriver + 3246000
+14  chromedriver                        0x00000001007c732c chromedriver + 3142444
+15  chromedriver                        0x00000001007e1088 chromedriver + 3248264
+16  chromedriver                        0x00000001007b9650 chromedriver + 3085904
+17  chromedriver                        0x00000001007fc580 chromedriver + 3360128
+18  chromedriver                        0x00000001007fc6e0 chromedriver + 3360480
+19  chromedriver                        0x000000010080cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+
+2026-08-29 21:34:26 - ERROR - [ThreadPoolExecutor-0_1] - [ThreadPoolExecutor-0_1] Error scraping product details: Message: timeout: Timed out receiving message from renderer: 29.640
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x000000010080ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010050c33c chromedriver + 279356
+2   chromedriver                        0x00000001004fc4a8 chromedriver + 214184
+3   chromedriver                        0x00000001004fc208 chromedriver + 213512
+4   chromedriver                        0x00000001004f9f7c chromedriver + 204668
+5   chromedriver                        0x00000001004fab70 chromedriver + 207728
+6   chromedriver                        0x0000000100507cc8 chromedriver + 261320
+7   chromedriver                        0x0000000100518ef8 chromedriver + 331512
+8   chromedriver                        0x00000001004fb1dc chromedriver + 209372
+9   chromedriver                        0x0000000100518cb4 chromedriver + 330932
+10  chromedriver                        0x0000000100592b24 chromedriver + 830244
+11  chromedriver                        0x000000010054a39c chromedriver + 533404
+12  chromedriver                        0x00000001007dd950 chromedriver + 3234128
+13  chromedriver                        0x00000001007e07b0 chromedriver + 3246000
+14  chromedriver                        0x00000001007c732c chromedriver + 3142444
+15  chromedriver                        0x00000001007e1088 chromedriver + 3248264
+16  chromedriver                        0x00000001007b9650 chromedriver + 3085904
+17  chromedriver                        0x00000001007fc580 chromedriver + 3360128
+18  chromedriver                        0x00000001007fc6e0 chromedriver + 3360480
+19  chromedriver                        0x000000010080cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+Traceback (most recent call last):
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/scraper.py", line 288, in scrape_product_details
+    driver.get(product_url)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 355, in get
+    self.execute(Command.GET, {"url": url})
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 346, in execute
+    self.error_handler.check_response(response)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/errorhandler.py", line 229, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.TimeoutException: Message: timeout: Timed out receiving message from renderer: 29.640
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x000000010080ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010050c33c chromedriver + 279356
+2   chromedriver                        0x00000001004fc4a8 chromedriver + 214184
+3   chromedriver                        0x00000001004fc208 chromedriver + 213512
+4   chromedriver                        0x00000001004f9f7c chromedriver + 204668
+5   chromedriver                        0x00000001004fab70 chromedriver + 207728
+6   chromedriver                        0x0000000100507cc8 chromedriver + 261320
+7   chromedriver                        0x0000000100518ef8 chromedriver + 331512
+8   chromedriver                        0x00000001004fb1dc chromedriver + 209372
+9   chromedriver                        0x0000000100518cb4 chromedriver + 330932
+10  chromedriver                        0x0000000100592b24 chromedriver + 830244
+11  chromedriver                        0x000000010054a39c chromedriver + 533404
+12  chromedriver                        0x00000001007dd950 chromedriver + 3234128
+13  chromedriver                        0x00000001007e07b0 chromedriver + 3246000
+14  chromedriver                        0x00000001007c732c chromedriver + 3142444
+15  chromedriver                        0x00000001007e1088 chromedriver + 3248264
+16  chromedriver                        0x00000001007b9650 chromedriver + 3085904
+17  chromedriver                        0x00000001007fc580 chromedriver + 3360128
+18  chromedriver                        0x00000001007fc6e0 chromedriver + 3360480
+19  chromedriver                        0x000000010080cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+
+2026-08-29 21:38:48 - ERROR - [ThreadPoolExecutor-0_0] - [ThreadPoolExecutor-0_0] Error scraping product details: Message: timeout: Timed out receiving message from renderer: 29.642
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x0000000104b5ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010485c33c chromedriver + 279356
+2   chromedriver                        0x000000010484c4a8 chromedriver + 214184
+3   chromedriver                        0x000000010484c208 chromedriver + 213512
+4   chromedriver                        0x0000000104849f7c chromedriver + 204668
+5   chromedriver                        0x000000010484ab70 chromedriver + 207728
+6   chromedriver                        0x0000000104857cc8 chromedriver + 261320
+7   chromedriver                        0x0000000104868ef8 chromedriver + 331512
+8   chromedriver                        0x000000010484b1dc chromedriver + 209372
+9   chromedriver                        0x0000000104868cb4 chromedriver + 330932
+10  chromedriver                        0x00000001048e2b24 chromedriver + 830244
+11  chromedriver                        0x000000010489a39c chromedriver + 533404
+12  chromedriver                        0x0000000104b2d950 chromedriver + 3234128
+13  chromedriver                        0x0000000104b307b0 chromedriver + 3246000
+14  chromedriver                        0x0000000104b1732c chromedriver + 3142444
+15  chromedriver                        0x0000000104b31088 chromedriver + 3248264
+16  chromedriver                        0x0000000104b09650 chromedriver + 3085904
+17  chromedriver                        0x0000000104b4c580 chromedriver + 3360128
+18  chromedriver                        0x0000000104b4c6e0 chromedriver + 3360480
+19  chromedriver                        0x0000000104b5cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+Traceback (most recent call last):
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/scraper.py", line 288, in scrape_product_details
+    driver.get(product_url)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 355, in get
+    self.execute(Command.GET, {"url": url})
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 346, in execute
+    self.error_handler.check_response(response)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/errorhandler.py", line 229, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.TimeoutException: Message: timeout: Timed out receiving message from renderer: 29.642
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x0000000104b5ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010485c33c chromedriver + 279356
+2   chromedriver                        0x000000010484c4a8 chromedriver + 214184
+3   chromedriver                        0x000000010484c208 chromedriver + 213512
+4   chromedriver                        0x0000000104849f7c chromedriver + 204668
+5   chromedriver                        0x000000010484ab70 chromedriver + 207728
+6   chromedriver                        0x0000000104857cc8 chromedriver + 261320
+7   chromedriver                        0x0000000104868ef8 chromedriver + 331512
+8   chromedriver                        0x000000010484b1dc chromedriver + 209372
+9   chromedriver                        0x0000000104868cb4 chromedriver + 330932
+10  chromedriver                        0x00000001048e2b24 chromedriver + 830244
+11  chromedriver                        0x000000010489a39c chromedriver + 533404
+12  chromedriver                        0x0000000104b2d950 chromedriver + 3234128
+13  chromedriver                        0x0000000104b307b0 chromedriver + 3246000
+14  chromedriver                        0x0000000104b1732c chromedriver + 3142444
+15  chromedriver                        0x0000000104b31088 chromedriver + 3248264
+16  chromedriver                        0x0000000104b09650 chromedriver + 3085904
+17  chromedriver                        0x0000000104b4c580 chromedriver + 3360128
+18  chromedriver                        0x0000000104b4c6e0 chromedriver + 3360480
+19  chromedriver                        0x0000000104b5cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+
+2026-08-29 21:39:18 - ERROR - [ThreadPoolExecutor-0_0] - [ThreadPoolExecutor-0_0] Error scraping reviews: Message: timeout: Timed out receiving message from renderer: 29.596
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x0000000104b5ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010485c33c chromedriver + 279356
+2   chromedriver                        0x000000010484c4a8 chromedriver + 214184
+3   chromedriver                        0x000000010484c208 chromedriver + 213512
+4   chromedriver                        0x0000000104849f7c chromedriver + 204668
+5   chromedriver                        0x000000010484ab70 chromedriver + 207728
+6   chromedriver                        0x0000000104857cc8 chromedriver + 261320
+7   chromedriver                        0x0000000104868ef8 chromedriver + 331512
+8   chromedriver                        0x000000010484b1dc chromedriver + 209372
+9   chromedriver                        0x0000000104868cb4 chromedriver + 330932
+10  chromedriver                        0x00000001048e2b24 chromedriver + 830244
+11  chromedriver                        0x000000010489a39c chromedriver + 533404
+12  chromedriver                        0x0000000104b2d950 chromedriver + 3234128
+13  chromedriver                        0x0000000104b307b0 chromedriver + 3246000
+14  chromedriver                        0x0000000104b1732c chromedriver + 3142444
+15  chromedriver                        0x0000000104b31088 chromedriver + 3248264
+16  chromedriver                        0x0000000104b09650 chromedriver + 3085904
+17  chromedriver                        0x0000000104b4c580 chromedriver + 3360128
+18  chromedriver                        0x0000000104b4c6e0 chromedriver + 3360480
+19  chromedriver                        0x0000000104b5cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+Traceback (most recent call last):
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/scraper.py", line 539, in scrape_product_reviews
+    driver.get(reviews_url)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 355, in get
+    self.execute(Command.GET, {"url": url})
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/webdriver.py", line 346, in execute
+    self.error_handler.check_response(response)
+  File "/Users/tahmidakter/Projects/pythonprojects/amazon-data-fetch/.venv/lib/python3.12/site-packages/selenium/webdriver/remote/errorhandler.py", line 229, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.TimeoutException: Message: timeout: Timed out receiving message from renderer: 29.596
+  (Session info: chrome=151.0.7922.175)
+Stacktrace:
+0   chromedriver                        0x0000000104b5ce84 chromedriver + 3427972
+1   chromedriver                        0x000000010485c33c chromedriver + 279356
+2   chromedriver                        0x000000010484c4a8 chromedriver + 214184
+3   chromedriver                        0x000000010484c208 chromedriver + 213512
+4   chromedriver                        0x0000000104849f7c chromedriver + 204668
+5   chromedriver                        0x000000010484ab70 chromedriver + 207728
+6   chromedriver                        0x0000000104857cc8 chromedriver + 261320
+7   chromedriver                        0x0000000104868ef8 chromedriver + 331512
+8   chromedriver                        0x000000010484b1dc chromedriver + 209372
+9   chromedriver                        0x0000000104868cb4 chromedriver + 330932
+10  chromedriver                        0x00000001048e2b24 chromedriver + 830244
+11  chromedriver                        0x000000010489a39c chromedriver + 533404
+12  chromedriver                        0x0000000104b2d950 chromedriver + 3234128
+13  chromedriver                        0x0000000104b307b0 chromedriver + 3246000
+14  chromedriver                        0x0000000104b1732c chromedriver + 3142444
+15  chromedriver                        0x0000000104b31088 chromedriver + 3248264
+16  chromedriver                        0x0000000104b09650 chromedriver + 3085904
+17  chromedriver                        0x0000000104b4c580 chromedriver + 3360128
+18  chromedriver                        0x0000000104b4c6e0 chromedriver + 3360480
+19  chromedriver                        0x0000000104b5cb1c chromedriver + 3427100
+20  libsystem_pthread.dylib             0x00000001848dfc54 _pthread_start + 132
+21  libsystem_pthread.dylib             0x00000001848dac18 thread_start + 4
+

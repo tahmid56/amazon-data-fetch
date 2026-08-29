@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Tuple
 import logging
 import os
 import shutil
+import threading
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,29 +29,39 @@ class AmazonScraper:
     def __init__(self, retry_handler: RetryHandler, db_manager: DatabaseManager):
         self.retry_handler = retry_handler
         self.db_manager = db_manager
-        self.driver = None
         self.captcha_count = 0
         self.consecutive_failures = 0
+        # Thread-local storage for drivers
+        self.thread_local = threading.local()
         
-        logger.info("AmazonScraper initialized")
+        logger.info("AmazonScraper initialized with multi-threading support")
+    
+    def get_driver(self) -> webdriver.Chrome:
+        """Get thread-local driver instance"""
+        if not hasattr(self.thread_local, 'driver') or self.thread_local.driver is None:
+            self.thread_local.driver = self.create_driver()
+            thread_name = threading.current_thread().name
+            logger.info(f"Created new driver for thread: {thread_name}")
+        return self.thread_local.driver
     
     def create_driver(self) -> webdriver.Chrome:
         """Create Chrome driver with anti-detection measures"""
-        logger.info("Creating Chrome driver...")
+        thread_name = threading.current_thread().name
+        logger.info(f"[{thread_name}] Creating Chrome driver...")
         chrome_options = Config.get_chrome_options()
         
         try:
             driver = webdriver.Chrome(options=chrome_options)
-            logger.info("Chrome driver created successfully")
+            logger.info(f"[{thread_name}] Chrome driver created successfully")
         except Exception as e:
-            logger.warning(f"Failed to create driver: {e}")
+            logger.warning(f"[{thread_name}] Failed to create driver: {e}")
             chromedriver_path = shutil.which('chromedriver')
             if chromedriver_path:
                 service = Service(chromedriver_path, log_path=os.devnull)
                 driver = webdriver.Chrome(service=service, options=chrome_options)
-                logger.info(f"Chrome driver created using path: {chromedriver_path}")
+                logger.info(f"[{thread_name}] Chrome driver created using path: {chromedriver_path}")
             else:
-                logger.error("ChromeDriver not found")
+                logger.error(f"[{thread_name}] ChromeDriver not found")
                 raise Exception("ChromeDriver not found")
         
         driver.set_page_load_timeout(Config.PAGE_LOAD_TIMEOUT)
@@ -64,11 +75,28 @@ class AmazonScraper:
         """
         try:
             driver.execute_script(stealth_js)
-            logger.debug("Stealth scripts executed")
+            logger.debug(f"[{thread_name}] Stealth scripts executed")
         except Exception as e:
-            logger.warning(f"Failed to execute stealth scripts: {e}")
+            logger.warning(f"[{thread_name}] Failed to execute stealth scripts: {e}")
         
         return driver
+    
+    def close_thread_driver(self):
+        """Close thread-local driver"""
+        if hasattr(self.thread_local, 'driver') and self.thread_local.driver:
+            try:
+                self.thread_local.driver.quit()
+                thread_name = threading.current_thread().name
+                logger.info(f"[{thread_name}] WebDriver closed")
+            except Exception as e:
+                logger.error(f"Error closing WebDriver: {e}")
+            finally:
+                self.thread_local.driver = None
+    
+    def close_all_drivers(self):
+        """Close all thread-local drivers"""
+        self.close_thread_driver()
+        logger.info("All drivers closed")
     
     def is_captcha_page(self, driver: webdriver.Chrome) -> bool:
         """Check if current page is a CAPTCHA page"""
@@ -247,29 +275,32 @@ class AmazonScraper:
             return "N/A", "N/A"
     
     def scrape_product_details(self, product_url: str) -> Dict:
-        """Scrape detailed product information including video URL and thumbnail"""
+        """Scrape detailed product information (thread-safe)"""
         if not product_url or product_url == "N/A":
             return {}
         
+        thread_name = threading.current_thread().name
+        driver = self.get_driver()
+        
         try:
-            logger.info(f"Scraping product details: {product_url[:100]}...")
+            logger.info(f"[{thread_name}] Scraping product details: {product_url[:100]}...")
             
-            self.driver.get(product_url)
+            driver.get(product_url)
             time.sleep(Config.get_random_delay())
             
-            if self.is_captcha_page(self.driver):
-                logger.warning("CAPTCHA detected on product page")
+            if self.is_captcha_page(driver):
+                logger.warning(f"[{thread_name}] CAPTCHA detected on product page")
                 return {}
             
             try:
-                WebDriverWait(self.driver, 10).until(
+                WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.ID, "productTitle"))
                 )
             except TimeoutException:
-                logger.warning("Timeout waiting for product title")
+                logger.warning(f"[{thread_name}] Timeout waiting for product title")
                 return {}
             
-            html_content = self.driver.page_source
+            html_content = driver.page_source
             soup = BeautifulSoup(html_content, 'html.parser')
             
             details = {}
@@ -324,7 +355,7 @@ class AmazonScraper:
             details['brand'] = brand_elem.text.strip() if brand_elem else "N/A"
             
             # Description
-            desc_elem = soup.find('div', {'id': 'productDescription'})
+            desc_elem = soup.find('ul', {'class': 'a-unordered-list a-vertical a-spacing-mini'})
             if desc_elem:
                 details['description'] = desc_elem.text.strip()[:500] if desc_elem else "N/A"
             else:
@@ -338,16 +369,21 @@ class AmazonScraper:
                 features_list = [item.text.strip() for item in feature_items[:10]]
             details['features'] = ' | '.join(features_list) if features_list else "N/A"
             
-            # Technical details
+            # Technical details - Extract entire table
             tech_details = {}
-            tech_table = soup.find('table', {'id': 'productDetails_techSpec_section_1'})
-            if tech_table:
-                rows = tech_table.find_all('tr')
-                for row in rows:
-                    th = row.find('th')
-                    td = row.find('td')
-                    if th and td:
-                        tech_details[th.text.strip()] = td.text.strip()
+            details_container = soup.find('div', {'id': 'productDetails_expanderSectionTables'})
+            if details_container:
+                tables = details_container.find_all('table', {'class': 'a-keyvalue prodDetTable'})
+                for table in tables:
+                    rows = table.find_all('tr')
+                    for row in rows:
+                        th = row.find('th', {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
+                        td = row.find('td', {'class': 'a-size-base prodDetAttrValue'})
+                        if th and td:
+                            key = th.text.strip()
+                            value = td.text.strip()
+                            if key and value:
+                                tech_details[key] = value
             details['technical_details'] = json.dumps(tech_details) if tech_details else "N/A"
             
             # Dimensions
@@ -389,7 +425,7 @@ class AmazonScraper:
             return details
             
         except Exception as e:
-            logger.error(f"Error scraping product details: {e}", exc_info=True)
+            logger.error(f"[{thread_name}] Error scraping product details: {e}", exc_info=True)
             return {}
     
     def extract_review_text(self, review_div) -> Tuple[str, str]:
@@ -414,22 +450,40 @@ class AmazonScraper:
                 title_elem = review_div.find(tag, attrs)
                 if title_elem:
                     review_title = title_elem.text.strip()
-                    # Remove "stars" text if present
                     review_title = re.sub(r'\d+\.\d+ out of 5 stars\s*', '', review_title)
                     review_title = review_title.strip()
                     if review_title and review_title != "N/A":
                         break
             
-            # If title still not found, try to find it in a different way
             if review_title == "N/A":
-                # Look for any element with review-title class
                 title_elem = review_div.find(class_=re.compile(r'review-title', re.I))
                 if title_elem:
                     review_title = title_elem.text.strip()
                     review_title = re.sub(r'\d+\.\d+ out of 5 stars\s*', '', review_title)
                     review_title = review_title.strip()
             
-            # Extract review body with multiple selectors
+            # Extract review body
+            # First try the specific container structure
+            rich_content_container = review_div.find('div', {'data-hook': 'reviewRichContentContainer'})
+            if rich_content_container:
+                p_elem = rich_content_container.find('p')
+                if p_elem:
+                    span_elem = p_elem.find('span')
+                    if span_elem:
+                        review_body = span_elem.get_text(strip=True)
+                    else:
+                        review_body = p_elem.get_text(strip=True)
+                else:
+                    span_elem = rich_content_container.find('span')
+                    if span_elem:
+                        review_body = span_elem.get_text(strip=True)
+                    else:
+                        review_body = rich_content_container.get_text(strip=True)
+                
+                if review_body and review_body != "N/A":
+                    return review_title, review_body
+            
+            # Try other selectors
             body_selectors = [
                 ('span', {'data-hook': 'reviewText'}),
                 ('div', {'data-hook': 'reviewText'}),
@@ -438,8 +492,6 @@ class AmazonScraper:
                 ('div', {'class': 'reviewText'}),
                 ('span', {'class': 'a-size-base reviewText'}),
                 ('div', {'class': 'a-size-base reviewText'}),
-                ('span', {'class': 'a-size-base reviewText reviewText-content'}),
-                ('div', {'class': 'a-size-base reviewText reviewText-content'}),
                 ('span', {'class': 'cr-original-review-content'}),
                 ('div', {'class': 'cr-original-review-content'}),
             ]
@@ -451,35 +503,18 @@ class AmazonScraper:
                     if review_body and review_body != "N/A":
                         break
             
-            # If body still not found, try to find it in a different way
             if review_body == "N/A":
-                # Look for any element with review-text class
                 body_elem = review_div.find(class_=re.compile(r'reviewRichContentContainer', re.I))
                 if body_elem:
                     review_body = body_elem.text.strip()
-                
-                # Try to find in the review content area
-                if review_body == "N/A":
-                    content_area = review_div.find('div', {'class': 'a-row a-spacing-small review-data'})
-                    if content_area:
-                        # Find the text after the title
-                        spans = content_area.find_all('span')
-                        for span in spans:
-                            text = span.text.strip()
-                            if len(text) > 20:  # Assume body text is longer than 20 chars
-                                review_body = text
-                                break
             
-            # Clean up the text
+            # Clean up text
             if review_title != "N/A":
-                review_title = review_title.strip()
-                # Remove extra whitespace
                 review_title = ' '.join(review_title.split())
             
             if review_body != "N/A":
-                review_body = review_body.strip()
-                # Remove extra whitespace
                 review_body = ' '.join(review_body.split())
+                review_body = re.sub(r'\s+', ' ', review_body).strip()
             
             return review_title, review_body
             
@@ -488,26 +523,26 @@ class AmazonScraper:
             return "N/A", "N/A"
     
     def scrape_product_reviews(self, product_url: str, product_title: str, product_id: Optional[int] = None) -> List[Dict]:
-        """Scrape reviews from product page with improved extraction"""
+        """Scrape reviews from product page (thread-safe)"""
         reviews = []
         
         if not product_url or product_url == "N/A":
-            logger.warning("Invalid product URL for reviews")
             return reviews
         
+        thread_name = threading.current_thread().name
+        driver = self.get_driver()
+        
         try:
-            # Navigate to reviews page
             reviews_url = product_url.split('?')[0] + '?th=1&psc=1#customerReviews'
-            logger.info(f"Scraping reviews from: {reviews_url[:100]}...")
+            logger.info(f"[{thread_name}] Scraping reviews...")
             
-            self.driver.get(reviews_url)
+            driver.get(reviews_url)
             time.sleep(Config.get_random_delay())
             
-            if self.is_captcha_page(self.driver):
-                logger.warning("CAPTCHA detected on reviews page")
+            if self.is_captcha_page(driver):
+                logger.warning(f"[{thread_name}] CAPTCHA detected on reviews page")
                 return reviews
             
-            # Wait for reviews to load with multiple selector options
             review_selectors = [
                 "[data-hook='review']",
                 ".review",
@@ -518,115 +553,72 @@ class AmazonScraper:
             reviews_loaded = False
             for selector in review_selectors:
                 try:
-                    WebDriverWait(self.driver, 10).until(
+                    WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.CSS_SELECTOR, selector))
                     )
                     reviews_loaded = True
-                    logger.debug(f"Reviews loaded with selector: {selector}")
                     break
                 except TimeoutException:
                     continue
             
             if not reviews_loaded:
-                logger.warning("No reviews found or timeout")
+                logger.warning(f"[{thread_name}] No reviews found")
                 return reviews
             
-            # Scroll to load more reviews
             for _ in range(3):
-                self.driver.execute_script("window.scrollBy(0, 500);")
+                driver.execute_script("window.scrollBy(0, 500);")
                 time.sleep(random.uniform(0.5, 1))
             
-            # Get page source
-            html_content = self.driver.page_source
+            html_content = driver.page_source
             soup = BeautifulSoup(html_content, 'html.parser')
             
-            # Find all review containers with multiple selectors
             review_divs = soup.find_all('div', {'data-hook': 'review'})
-            
             if not review_divs:
                 review_divs = soup.find_all('div', {'class': 'review'})
             
-            if not review_divs:
-                review_divs = soup.find_all('div', {'class': re.compile(r'review', re.I)})
-            
-            logger.info(f"Found {len(review_divs)} reviews")
+            logger.info(f"[{thread_name}] Found {len(review_divs)} reviews")
             
             for idx, review_div in enumerate(review_divs[:Config.MAX_REVIEWS_PER_PRODUCT], 1):
                 try:
                     review = {}
                     
-                    # Extract review title and body with improved methods
                     review_title, review_body = self.extract_review_text(review_div)
                     
-                    # Extract review rating
+                    # Rating
                     review_rating = "N/A"
                     rating_elem = review_div.find('i', {'data-hook': 'review-star-rating'})
                     if rating_elem:
                         rating_text = rating_elem.find('span', {'class': 'a-icon-alt'})
                         if rating_text:
-                            review_rating = rating_text.text.strip()
-                            # Extract just the number
-                            rating_match = re.search(r'(\d+\.?\d*)', review_rating)
+                            rating_value = rating_text.text.strip()
+                            rating_match = re.search(r'(\d+\.?\d*)', rating_value)
                             if rating_match:
                                 review_rating = rating_match.group(1)
-                    else:
-                        # Try alternative rating selectors
-                        rating_elem = review_div.find('i', {'class': re.compile(r'a-icon-star', re.I)})
-                        if rating_elem:
-                            rating_text = rating_elem.find('span', {'class': 'a-icon-alt'})
-                            if rating_text:
-                                review_rating = rating_text.text.strip()
-                                rating_match = re.search(r'(\d+\.?\d*)', review_rating)
-                                if rating_match:
-                                    review_rating = rating_match.group(1)
                     
-                    # Extract review date
+                    # Date
                     review_date = "N/A"
                     date_elem = review_div.find('span', {'data-hook': 'review-date'})
                     if date_elem:
                         review_date = date_elem.text.strip()
-                    else:
-                        # Try alternative date selectors
-                        date_elem = review_div.find('span', {'class': 'review-date'})
-                        if date_elem:
-                            review_date = date_elem.text.strip()
                     
-                    # Extract reviewer name
+                    # Reviewer name
                     reviewer_name = "N/A"
                     reviewer_elem = review_div.find('span', {'class': 'a-profile-name'})
                     if reviewer_elem:
                         reviewer_name = reviewer_elem.text.strip()
-                    else:
-                        # Try alternative name selectors
-                        reviewer_elem = review_div.find('div', {'class': 'a-profile-content'})
-                        if reviewer_elem:
-                            name_elem = reviewer_elem.find('span')
-                            if name_elem:
-                                reviewer_name = name_elem.text.strip()
                     
-                    # Check verified purchase
+                    # Verified purchase
                     verified_purchase = "No"
                     verified_elem = review_div.find('span', {'data-hook': 'avp-badge'})
                     if verified_elem:
                         verified_purchase = "Yes"
-                    else:
-                        # Try alternative verified badge selectors
-                        verified_elem = review_div.find('span', {'class': re.compile(r'verified', re.I)})
-                        if verified_elem:
-                            verified_purchase = "Yes"
                     
-                    # Extract helpful votes
+                    # Helpful votes
                     helpful_votes = "N/A"
                     helpful_elem = review_div.find('span', {'data-hook': 'helpful-vote-statement'})
                     if helpful_elem:
                         helpful_votes = helpful_elem.text.strip()
-                    else:
-                        # Try alternative helpful votes selectors
-                        helpful_elem = review_div.find('span', {'class': re.compile(r'helpful', re.I)})
-                        if helpful_elem:
-                            helpful_votes = helpful_elem.text.strip()
                     
-                    # Set review data
                     review['review_title'] = review_title
                     review['review_body'] = review_body
                     review['review_rating'] = review_rating
@@ -638,135 +630,85 @@ class AmazonScraper:
                     review['product_url'] = product_url
                     review['scraped_at'] = datetime.now().isoformat()
                     
-                    # Log review details
-                    logger.debug(f"Review {idx}:")
-                    logger.debug(f"  Title: {review_title[:50]}...")
-                    logger.debug(f"  Rating: {review_rating}")
-                    logger.debug(f"  Date: {review_date}")
-                    logger.debug(f"  Reviewer: {reviewer_name}")
-                    logger.debug(f"  Body length: {len(review_body)} characters")
-                    
-                    # Save to database
                     review_id = self.db_manager.insert_review(review, product_id)
-                    
                     reviews.append(review)
                     
                 except Exception as e:
-                    logger.error(f"Error parsing review {idx}: {e}")
+                    logger.error(f"[{thread_name}] Error parsing review {idx}: {e}")
                     continue
             
-            # Log summary
-            successful_bodies = sum(1 for r in reviews if r.get('review_body') != 'N/A')
-            successful_titles = sum(1 for r in reviews if r.get('review_title') != 'N/A')
-            logger.info(f"Scraped {len(reviews)} reviews")
-            logger.info(f"  - With body: {successful_bodies}")
-            logger.info(f"  - With title: {successful_titles}")
-            
+            logger.info(f"[{thread_name}] Scraped {len(reviews)} reviews")
             return reviews
             
         except Exception as e:
-            logger.error(f"Error scraping reviews: {e}", exc_info=True)
+            logger.error(f"[{thread_name}] Error scraping reviews: {e}", exc_info=True)
             return reviews
     
     def scrape_keyword(self, keyword: str, keyword_index: int, total_keywords: int) -> Dict:
-        """Scrape products and their details for a keyword"""
-        logger.info(f"[{keyword_index}/{total_keywords}] Processing keyword: {keyword}")
+        """Scrape products and details for a keyword (thread-safe)"""
+        thread_name = threading.current_thread().name
+        logger.info(f"[{thread_name}] [{keyword_index}/{total_keywords}] Processing: {keyword}")
+        
+        driver = self.get_driver()
         
         try:
-            if self.driver is None:
-                self.driver = self.create_driver()
-            
             search_url = Config.SEARCH_URL.format(keyword=keyword.replace(' ', '+'))
-            logger.info(f"Searching: {search_url}")
+            logger.info(f"[{thread_name}] Searching: {search_url}")
             
-            self.driver.get(search_url)
+            driver.get(search_url)
             time.sleep(Config.get_random_delay())
             
-            if self.is_captcha_page(self.driver):
-                logger.warning(f"CAPTCHA detected for keyword: {keyword}")
-                self.db_manager.insert_keyword_status(
-                    keyword, 'failed', 0, 0, 'CAPTCHA detected'
-                )
+            if self.is_captcha_page(driver):
+                logger.warning(f"[{thread_name}] CAPTCHA for keyword: {keyword}")
+                self.db_manager.insert_keyword_status(keyword, 'failed', 0, 0, 'CAPTCHA detected')
                 return {'keyword': keyword, 'products': [], 'error': 'CAPTCHA'}
             
             try:
-                WebDriverWait(self.driver, 15).until(
+                WebDriverWait(driver, 15).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "[data-component-type='s-search-result']"))
                 )
             except TimeoutException:
-                logger.warning(f"No search results for: {keyword}")
-                self.db_manager.insert_keyword_status(
-                    keyword, 'failed', 0, 0, 'No results found'
-                )
+                logger.warning(f"[{thread_name}] No results for: {keyword}")
+                self.db_manager.insert_keyword_status(keyword, 'failed', 0, 0, 'No results')
                 return {'keyword': keyword, 'products': [], 'error': 'No results'}
             
-            self.driver.execute_script("window.scrollBy(0, 500);")
+            driver.execute_script("window.scrollBy(0, 500);")
             time.sleep(random.uniform(1, 2))
             
-            html_content = self.driver.page_source
-            products = self.parse_search_results(html_content)
-            
-            logger.info(f"Found {len(products)} products for keyword: {keyword}")
+            products = self.parse_search_results(driver.page_source)
+            logger.info(f"[{thread_name}] Found {len(products)} products for: {keyword}")
             
             all_products = []
             all_reviews = []
             
             for idx, product in enumerate(products[:Config.MAX_PRODUCTS_PER_KEYWORD], 1):
-                logger.info(f"  [{idx}/{min(len(products), Config.MAX_PRODUCTS_PER_KEYWORD)}] Scraping: {product['title'][:50]}...")
+                logger.info(f"[{thread_name}] [{idx}/{len(products[:Config.MAX_PRODUCTS_PER_KEYWORD])}] {product['title'][:40]}...")
                 
                 details = self.scrape_product_details(product['url'])
-                
                 full_product = {**product, **details}
                 full_product['keyword'] = keyword
                 full_product['scraped_at'] = datetime.now().isoformat()
                 
                 product_id = self.db_manager.insert_product(full_product)
                 
-                reviews = self.scrape_product_reviews(
-                    product['url'], 
-                    product['title'],
-                    product_id
-                )
+                reviews = self.scrape_product_reviews(product['url'], product['title'], product_id)
                 all_reviews.extend(reviews)
-                
                 all_products.append(full_product)
                 
                 if idx < len(products[:Config.MAX_PRODUCTS_PER_KEYWORD]):
-                    delay = Config.get_delay_between_products()
-                    logger.info(f"  Waiting {delay:.2f} seconds before next product...")
-                    time.sleep(delay)
+                    time.sleep(Config.get_delay_between_products())
             
             self.db_manager.insert_keyword_status(
-                keyword, 
-                'success' if all_products else 'failed',
-                len(all_products),
-                len(all_reviews),
-                None if all_products else 'No products scraped'
+                keyword, 'success' if all_products else 'failed',
+                len(all_products), len(all_reviews)
             )
             
-            logger.info(f"Completed keyword '{keyword}': {len(all_products)} products, {len(all_reviews)} reviews")
+            logger.info(f"[{thread_name}] Completed '{keyword}': {len(all_products)} products, {len(all_reviews)} reviews")
             
-            return {
-                'keyword': keyword,
-                'products': all_products,
-                'reviews': all_reviews
-            }
+            return {'keyword': keyword, 'products': all_products, 'reviews': all_reviews}
             
         except Exception as e:
-            logger.error(f"Error scraping keyword {keyword}: {e}", exc_info=True)
-            self.db_manager.insert_keyword_status(
-                keyword, 'failed', 0, 0, str(e)[:200]
-            )
-            self.close_driver()
+            logger.error(f"[{thread_name}] Error scraping {keyword}: {e}", exc_info=True)
+            self.db_manager.insert_keyword_status(keyword, 'failed', 0, 0, str(e)[:200])
+            self.close_thread_driver()
             raise
-    
-    def close_driver(self):
-        """Close the driver"""
-        if self.driver:
-            try:
-                self.driver.quit()
-                logger.info("WebDriver closed")
-            except Exception as e:
-                logger.error(f"Error closing WebDriver: {e}")
-            finally:
-                self.driver = None
