@@ -1,0 +1,24 @@
+services:
+  product-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: amazon-product-analytics
+
+    ports:
+      - "8501:8501"
+
+    environment:
+      CSV_PATH: /app/notebooks/cleaned_output/cleaned_products_20260831_163948.csv
+
+      SENTIMENT_MODEL_PATH: /app/models/finetuned_model_sentiment_analysis
+
+      VECTORIZER_PATH: /app/models/label_encoder_similar_product.joblib
+
+      PRICE_TIER_MODEL_PATH: /app/models/price_tier_model.joblib
+
+      VGG16_MODEL_PATH: /app/models/vgg16_feature_extractor.keras
+
+
+    restart: unless-stopped

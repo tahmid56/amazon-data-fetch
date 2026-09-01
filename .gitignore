@@ -2,3 +2,11 @@
 requirements.txt
 venv
 __pycache__
+*.joblib
+*.keras
+*.zip
+__init__.py
+config.json
+*.safetensors
+tokenizer_config.json
+tokenizer.json

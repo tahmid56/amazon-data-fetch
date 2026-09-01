@@ -1,5 +1,5 @@
 [project]
-name = "amazon-data-fetch"
+name = "amazon_data_fetch"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -11,4 +11,10 @@ dependencies = [
     "fake-useragent==1.4.0",
     "tenacity==8.2.3",
     "python-dotenv==1.0.0",
+    "scikit-learn==1.6.1",
+    "torch>=2.13.0",
+    "transformers>=5.16.1",
+    "tensorflow>=2.18.1",
+    "streamlit>=1.62.0",
+    "torchvision>=0.28.0",
 ]
